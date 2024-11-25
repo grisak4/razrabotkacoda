@@ -42,7 +42,7 @@ const Login = () => {
                 <div className='form-header'>
                     Sign In
                 </div>
-                <form onSubmit={handleSubmit}>
+                <form className='login-form' onSubmit={handleSubmit}>
                     <div className='username'>
                         <input
                             type='text'
