@@ -6,7 +6,7 @@ import (
 	"loginform/middlewares/cors"
 
 	////
-	"loginform/services/employees"
+	adm "loginform/services/admin"
 	"loginform/services/hello"
 	"loginform/services/login"
 
@@ -18,14 +18,10 @@ import (
 func InitRoutes(router *gin.Engine, db *gorm.DB) {
 	cors.InitCors(router)
 
-	// // test
-	// router.GET("/hello", func(c *gin.Context) {
-	// 	hello.GetHello(c)
-	// })
-
-	router.GET("/employeestable", func(c *gin.Context) {
-		employees.GetEmployees(c, db)
-	})
+	router.GET("/employees", func(c *gin.Context) { adm.GetEmployees(c, db) })
+	router.POST("/employees", func(c *gin.Context) { adm.CreateEmployee(c, db) })
+	router.PUT("/employees/:id", func(c *gin.Context) { adm.UpdateEmployee(c, db) })
+	router.DELETE("/employees/:id", func(c *gin.Context) { adm.DeleteEmployee(c, db) })
 
 	// authorization
 	router.POST("/login", func(c *gin.Context) {

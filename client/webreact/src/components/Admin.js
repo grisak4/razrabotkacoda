@@ -15,6 +15,8 @@ function Home() {
         Password: '',
         Role: ''
     });
+    const [editMode, setEditMode] = useState(false); // Режим редактирования
+    const [editId, setEditId] = useState(null); // ID редактируемого сотрудника
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -23,7 +25,7 @@ function Home() {
 
     const fetchEmployees = async () => {
         try {
-            const response = await fetch("http://localhost:8080/employeestable");
+            const response = await fetch("http://localhost:8080/employees");
             const data = await response.json();
             setEmployees(data);
         } catch (error) {
@@ -38,12 +40,16 @@ function Home() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const url = editMode ? `http://localhost:8080/employees/${editId}` : "http://localhost:8080/employees";
+        const method = editMode ? "PUT" : "POST";
+
         try {
-            const response = await fetch("http://localhost:8080/employees", {
-                method: "POST",
+            const response = await fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
+
             if (response.ok) {
                 fetchEmployees();
                 setFormData({
@@ -56,11 +62,45 @@ function Home() {
                     Password: '',
                     Role: ''
                 });
+                setEditMode(false);
+                setEditId(null);
             } else {
-                console.error("Failed to add employee");
+                console.error("Failed to process employee");
             }
         } catch (error) {
-            console.error("Error adding employee:", error);
+            console.error("Error processing employee:", error);
+        }
+    };
+
+    const handleEdit = (employee) => {
+        setFormData({
+            Name: employee.Name,
+            Position: employee.Position,
+            HireDate: employee.HireDate,
+            Salary: employee.Salary,
+            Status: employee.Status,
+            Login: employee.Login,
+            Password: '', // Пароль пустой для безопасности
+            Role: employee.Role
+        });
+        setEditId(employee.ID);
+        setEditMode(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Вы уверены, что хотите удалить сотрудника?")) {
+            try {
+                const response = await fetch(`http://localhost:8080/employees/${id}`, {
+                    method: "DELETE"
+                });
+                if (response.ok) {
+                    fetchEmployees();
+                } else {
+                    console.error("Failed to delete employee");
+                }
+            } catch (error) {
+                console.error("Error deleting employee:", error);
+            }
         }
     };
 
@@ -85,6 +125,7 @@ function Home() {
                             <th>Статус</th>
                             <th>Логин</th>
                             <th>Роль</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,6 +139,10 @@ function Home() {
                                 <td>{employee.Status}</td>
                                 <td>{employee.Login}</td>
                                 <td>{employee.Role}</td>
+                                <td>
+                                    <button onClick={() => handleEdit(employee)}>Редактировать</button>
+                                    <button onClick={() => handleDelete(employee.ID)}>Удалить</button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -134,7 +179,7 @@ function Home() {
                     </div>
                     <div className="form-group">
                         <label>Пароль</label>
-                        <input type="password" name="Password" value={formData.Password} onChange={handleInputChange} required />
+                        <input type="password" name="Password" value={formData.Password} onChange={handleInputChange} required={!editMode} />
                     </div>
                     <div className="form-group">
                         <label>Роль</label>
@@ -145,17 +190,21 @@ function Home() {
                         </select>
                     </div>
                     <div className="form-actions">
-                        <button type="submit">Добавить</button>
-                        <button type="button" onClick={() => setFormData({
-                            Name: '',
-                            Position: '',
-                            HireDate: '',
-                            Salary: '',
-                            Status: 'active',
-                            Login: '',
-                            Password: '',
-                            Role: ''
-                        })}>
+                        <button type="submit">{editMode ? "Сохранить" : "Добавить"}</button>
+                        <button type="button" onClick={() => {
+                            setFormData({
+                                Name: '',
+                                Position: '',
+                                HireDate: '',
+                                Salary: '',
+                                Status: 'active',
+                                Login: '',
+                                Password: '',
+                                Role: ''
+                            });
+                            setEditMode(false);
+                            setEditId(null);
+                        }}>
                             Очистить
                         </button>
                     </div>
