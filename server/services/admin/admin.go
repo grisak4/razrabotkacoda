@@ -25,21 +25,19 @@ func GetEmployees(c *gin.Context, db *gorm.DB) {
 func CreateEmployee(c *gin.Context, db *gorm.DB) {
 	var employee models.Employee
 
-	// Привязка данных из тела запроса
+	// Привязка JSON-данных
 	if err := c.ShouldBindJSON(&employee); err != nil {
-		log.Printf("Ошибка привязки данных: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные"})
+		log.Printf("Error binding JSON: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Сохранение нового сотрудника в базе данных
+	// Сохранение в базу данных
 	if err := db.Create(&employee).Error; err != nil {
-		log.Printf("Ошибка при создании сотрудника: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось создать сотрудника"})
+		log.Printf("Error creating employee: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create employee"})
 		return
 	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Сотрудник успешно создан", "employee": employee})
 }
 
 // Обновление сотрудника
@@ -56,7 +54,7 @@ func UpdateEmployee(c *gin.Context, db *gorm.DB) {
 	}
 
 	// Привязка данных из тела запроса
-	if err := c.ShouldBindJSON(&employee); err != nil {
+	if err := c.BindJSON(&employee); err != nil {
 		log.Printf("Ошибка при привязке данных: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Некорректные данные"})
 		return

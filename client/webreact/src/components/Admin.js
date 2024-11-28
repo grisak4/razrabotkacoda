@@ -42,14 +42,24 @@ function Home() {
         e.preventDefault();
         const url = editMode ? `http://localhost:8080/employees/${editId}` : "http://localhost:8080/employees";
         const method = editMode ? "PUT" : "POST";
-
+    
+        const formattedHireDate = formData.HireDate
+            ? new Date(formData.HireDate).toISOString()
+            : "0001-01-01T00:00:00Z"; // Установка формата ISO или значения по умолчанию
+    
+        const dataToSend = {
+            ...formData,
+            HireDate: formattedHireDate,
+            Salary: parseFloat(formData.Salary), // Преобразуем строку в float
+        };
+    
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(dataToSend),
             });
-
+    
             if (response.ok) {
                 fetchEmployees();
                 setFormData({
@@ -74,16 +84,16 @@ function Home() {
 
     const handleEdit = (employee) => {
         setFormData({
-            Name: employee.Name,
-            Position: employee.Position,
-            HireDate: employee.HireDate,
-            Salary: employee.Salary,
-            Status: employee.Status,
-            Login: employee.Login,
-            Password: '', // Пароль пустой для безопасности
-            Role: employee.Role
+            Name: employee.name || '',
+            Position: employee.position || '',
+            HireDate: employee.hire_date || '',
+            Salary: employee.salary || '',
+            Status: employee.status || 'active',
+            Login: employee.login || '',
+            Password: employee.password, // Пароль пустой для безопасности
+            Role: employee.role || ''
         });
-        setEditId(employee.ID);
+        setEditId(employee.id);
         setEditMode(true);
     };
 
@@ -129,61 +139,68 @@ function Home() {
                         </tr>
                     </thead>
                     <tbody>
-                        {employees.map(employee => (
-                            <tr key={employee.ID}>
-                                <td>{employee.ID}</td>
-                                <td>{employee.Name}</td>
-                                <td>{employee.Position}</td>
-                                <td>{employee.HireDate}</td>
-                                <td>{employee.Salary.toFixed(2)}</td>
-                                <td>{employee.Status}</td>
-                                <td>{employee.Login}</td>
-                                <td>{employee.Role}</td>
-                                <td>
-                                    <button onClick={() => handleEdit(employee)}>Редактировать</button>
-                                    <button onClick={() => handleDelete(employee.ID)}>Удалить</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
+    {employees.length > 0 ? (
+        employees.map((employee) => (
+            <tr key={employee.id}>
+                <td>{employee.id}</td>
+                <td>{employee.name}</td>
+                <td>{employee.position}</td>
+                <td>{new Date(employee.hire_date).toLocaleDateString()}</td>
+                <td>{employee.salary ? employee.salary.toFixed(2) : "0.00"}</td>
+                <td>{employee.status}</td>
+                <td>{employee.login}</td>
+                <td>{employee.role}</td>
+                <td>
+                    <button onClick={() => handleEdit(employee)}>Редактировать</button>
+                    <button onClick={() => handleDelete(employee.id)}>Удалить</button>
+                </td>
+            </tr>
+        ))
+    ) : (
+        <tr>
+            <td colSpan="9">Сотрудники не найдены.</td>
+        </tr>
+    )}
+</tbody>
+
                 </table>
             </div>
             <div className="form-container">
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Имя</label>
-                        <input type="text" name="Name" value={formData.Name} onChange={handleInputChange} required />
+                        <input type="text" name="Name" value={formData.Name || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                         <label>Должность</label>
-                        <input type="text" name="Position" value={formData.Position} onChange={handleInputChange} required />
+                        <input type="text" name="Position" value={formData.Position || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                         <label>Дата найма</label>
-                        <input type="date" name="HireDate" value={formData.HireDate} onChange={handleInputChange} required />
+                        <input type="date" name="HireDate" value={formData.HireDate || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                         <label>Зарплата</label>
-                        <input type="number" name="Salary" value={formData.Salary} onChange={handleInputChange} step="0.01" required />
+                        <input type="number" name="Salary" value={formData.Salary || ''} onChange={handleInputChange} step="0.01" required />
                     </div>
                     <div className="form-group">
                         <label>Статус</label>
-                        <select name="Status" value={formData.Status} onChange={handleInputChange}>
+                        <select name="Status" value={formData.Status || 'active'} onChange={handleInputChange}>
                             <option value="active">Активный</option>
                             <option value="inactive">Неактивный</option>
                         </select>
                     </div>
                     <div className="form-group">
                         <label>Логин</label>
-                        <input type="text" name="Login" value={formData.Login} onChange={handleInputChange} required />
+                        <input type="text" name="Login" value={formData.Login || ''} onChange={handleInputChange} required />
                     </div>
                     <div className="form-group">
                         <label>Пароль</label>
-                        <input type="password" name="Password" value={formData.Password} onChange={handleInputChange} required={!editMode} />
+                        <input type="password" name="Password" value={formData.Password || ''} onChange={handleInputChange} required={!editMode} />
                     </div>
                     <div className="form-group">
                         <label>Роль</label>
-                        <select name="Role" value={formData.Role} onChange={handleInputChange} required>
+                        <select name="Role" value={formData.Role || ''} onChange={handleInputChange} required>
                             <option value="">Выберите роль</option>
                             <option value="admin">Администратор</option>
                             <option value="user">Пользователь</option>
